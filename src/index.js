@@ -1,8 +1,16 @@
 import { ApolloServer, gql } from "apollo-server";
 import { nanoid } from "nanoid";
+import bcrypt from "bcryptjs";
 import sqlite3 from "sqlite3";
+import { open } from "sqlite";
 
-const db = new sqlite3.Database("./database.db");
+let db;
+(async () => {
+  db = await open({
+    filename: "./database.db",
+    driver: sqlite3.Database,
+  });
+})();
 
 const typeDefs = gql`
   type User {
@@ -31,12 +39,13 @@ const typeDefs = gql`
 
   input CreateTeamPayload {
     userid: String
-    teamname: String
-    teamtag: String
+    name: String
+    tag: String
   }
 
   input AddPlayerPayload {
     userid: String
+    teamid: String
   }
 
   type Query {
@@ -48,77 +57,72 @@ const typeDefs = gql`
   type Mutation {
     signup(data: SignUpPayLoad): AuthRespons
     createTeam(data: CreateTeamPayload): Team
-    addPlayer(data: AddPlayerPayload): User #Implement this
+    addPlayer(data: AddPlayerPayload): Team
   }
 `;
-let users = new Map();
-let teams = new Map();
 
 const resolvers = {
   User: {
-    team: (parent) => {
-      return teams.get(parent.team);
+    team: async (parent) => {
+      const sql =
+        "SELECT teams.* FROM teams JOIN player_team_realation ptr ON teams.id = ptr.teamId AND ptr.playerId = (?);";
+      const team = await db.get(sql, parent.id);
+      return team;
     },
   },
   Team: {
-    players: (parent) => {
-      console.dir(parent);
-
-      let players = [];
-      parent.players.forEach((pId) => players.push(users.get(pId)));
-
-      return players;
+    players: async (parent) => {
+      const sql =
+        "SELECT users.* FROM users JOIN player_team_realation ptr ON users.id = ptr.playerId AND ptr.teamId = (?);";
+      const player = await db.all(sql, parent.id);
+      return player;
     },
   },
   Query: {
-    me: (parent, { id }, context, info) => {
-      const user = users.get(id);
+    me: async (parent, { id }, context, info) => {
+      const sql = "SELECT id, username from users WHERE id=(?);";
+      const user = await db.get(sql, id);
       return user;
     },
-    teams: () => {
-      let t = [];
-      teams.forEach((team) => {
-        t.push({ ...team });
-      });
-      console.dir(t);
+    teams: async () => {
+      const sql = "SELECT id, name, tag FROM teams;";
+      const t = await db.all(sql);
       return t;
     },
-    team: (parent, { id }) => {
-      const team = teams.get(id);
+    team: async (parent, { id }) => {
+      const sql = "SELECT id, name, tag FROM teams WHERE id=(?)";
+      const team = await db.get(sql, [id]);
       return team;
     },
   },
   Mutation: {
-    signup: (parent, { data }, context, info) => {
+    signup: async (parent, { data }, context, info) => {
       const { username, password, email } = data;
+      const hash = await bcrypt.hash(password, 10);
       const id = nanoid();
-      const user = {
-        id,
-        username,
-        password,
-        email,
-      };
-
-      console.log(
-        `User: ${username} with password: ${password} signed up, and got id: ${id}`
+      const res = await db.run(
+        "INSERT INTO users (id, username, password, email) VALUES(?,?,?,?)",
+        [id, username, hash, email]
       );
-      users.set(id, user);
       return { id, token: nanoid() };
     },
-    createTeam: (parent, { data }, context) => {
-      const { userid, teamname, teamtag } = data;
+    createTeam: async (parent, { data }, context) => {
+      const { userid, name, tag } = data;
       const id = nanoid();
-      const user = users.get(userid);
-      users.set(userid, { ...user, team: id });
-      const team = {
-        id,
-        userid,
-        name: teamname,
-        tag: teamtag,
-        players: [userid],
-      };
-      teams.set(id, team);
-      console.dir(team);
+      const tSql = "INSERT INTO teams(id,name,tag) VALUES(?,?,?)";
+      const rSql =
+        "INSERT INTO player_team_realation(playerId,teamId) VALUES(?,?)";
+      await db.run(tSql, [id, name, tag]);
+      await db.run(rSql, [userid, id]);
+      return { id, name, tag };
+    },
+    addPlayer: async (parent, { data }, context) => {
+      const { userid, teamid } = data;
+      const rSql =
+        "INSERT INTO player_team_realation(playerId,teamId) VALUES(?,?)";
+      await db.run(rSql, [userid, teamid]);
+      const sql = "SELECT id, name, tag FROM teams WHERE id=(?)";
+      const team = await db.get(sql, [teamid]);
       return team;
     },
   },
