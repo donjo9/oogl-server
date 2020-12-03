@@ -31,6 +31,10 @@ const typeDefs = gql`
     token: String
   }
 
+  input SignInPayload {
+    username: String
+    password: String
+  }
   input SignUpPayLoad {
     username: String
     password: String
@@ -55,6 +59,7 @@ const typeDefs = gql`
   }
 
   type Mutation {
+    signin(data: SignInPayload): AuthRespons
     signup(data: SignUpPayLoad): AuthRespons
     createTeam(data: CreateTeamPayload): Team
     addPlayer(data: AddPlayerPayload): Team
@@ -96,6 +101,21 @@ const resolvers = {
     },
   },
   Mutation: {
+    signin: async (parent, { data }, context) => {
+      const { username, password } = data;
+      const sql = "SELECT id, password FROM users WHERE username = (?);";
+      const user = await db.get(sql, [username]);
+      if (!user) {
+        throw new Error("Wrong username and/or password");
+      }
+
+      const validPassword = await bcrypt.compare(password, user.password);
+      if (!validPassword) {
+        throw new Error("Wrong username and/or password");
+      }
+
+      return { id: user.id, token: nanoid() };
+    },
     signup: async (parent, { data }, context, info) => {
       const { username, password, email } = data;
       const hash = await bcrypt.hash(password, 10);
