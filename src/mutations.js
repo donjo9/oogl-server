@@ -38,13 +38,33 @@ export const Mutation = {
     await db.run(rSql, [userid, id]);
     return { id, name, tag };
   },
-  addPlayer: async (parent, { data }, context) => {
-    const { userid, teamid } = data;
-    const rSql =
-      "INSERT INTO player_team_realation(playerId,teamId) VALUES(?,?)";
-    await db.run(rSql, [userid, teamid]);
-    const sql = "SELECT id, name, tag FROM teams WHERE id=(?)";
-    const team = await db.get(sql, [teamid]);
-    return team;
+  createTeamInvitation: async (parent, { data }, context) => {
+    try {
+      const { playerid, teamid } = data;
+      const sql =
+        "INSERT INTO team_invitations(id, playerid, teamid) VALUES(?,?,?)";
+      const values = [nanoid(), playerid, teamid];
+      await db.run(sql, values);
+      return true;
+    } catch (error) {
+      throw new Error("Wrong player and/or teamid, please try again!");
+    }
+  },
+  acceptTeamInvitation: async (parent, { data }, context) => {
+    const { invitationid } = data;
+    const iSql = "SELECT playerId, teamId from team_invitations WHERE id = (?)";
+    const invite = await db.get(iSql, [invitationid]);
+    if (invite) {
+      const rSql =
+        "INSERT INTO player_team_realation(playerId,teamId) VALUES(?,?)";
+      await db.run(rSql, [invite.playerId, invite.teamId]);
+      const sSql = "SELECT id, name, tag FROM teams WHERE id=(?)";
+      const team = await db.get(sSql, [invite.teamId]);
+      const dSql = "DELETE FROM team_invitations WHERE id = (?)";
+      await db.run(dSql, invitationid);
+      return team;
+    } else {
+      throw new Error("No invitation with that id");
+    }
   },
 };

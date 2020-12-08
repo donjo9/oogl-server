@@ -33,10 +33,12 @@ export const typeDefs = gql`
     name: String
     tag: String
   }
-
-  input AddPlayerPayload {
-    userid: String
+  input CreateTeamInvitationPayload {
+    playerid: String
     teamid: String
+  }
+  input AcceptTeamInvitationPayload {
+    invitationid: String
   }
 
   type Query {
@@ -49,6 +51,7 @@ export const typeDefs = gql`
     signin(data: SignInPayload): AuthRespons
     signup(data: SignUpPayLoad): AuthRespons
     createTeam(data: CreateTeamPayload): Team
-    addPlayer(data: AddPlayerPayload): Team
+    createTeamInvitation(data: CreateTeamInvitationPayload): Boolean
+    acceptTeamInvitation(data: AcceptTeamInvitationPayload): Team
   }
 `;
