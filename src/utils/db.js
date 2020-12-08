@@ -1,11 +1,10 @@
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
 
-const dbOpen = async () => {
-  return await open({
-    filename: "./database.db",
-    driver: sqlite3.Database,
-  });
-};
+const db = await open({
+  filename: "./database.db",
+  driver: sqlite3.Database,
+});
+await db.run("PRAGMA foreign_keys = ON");
 
-export const db = await dbOpen();
+export { db };
