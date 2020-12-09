@@ -18,10 +18,15 @@ export const Team = {
   players,
 };
 export const Query = {
-  me: async (parent, { id }, context, info) => {
+  player: async (parent, { id }, context, info) => {
     const sql = "SELECT id, username from users WHERE id=(?);";
     const user = await db.get(sql, id);
     return user;
+  },
+  players: async (parent, data, context, info) => {
+    const sql = "SELECT id, username FROM users";
+    const users = await db.all(sql);
+    return users || [];
   },
   teams: async (parent, data, context) => {
     const sql = "SELECT id, name, tag FROM teams;";

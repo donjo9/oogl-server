@@ -42,7 +42,8 @@ export const typeDefs = gql`
   }
 
   type Query {
-    me(id: String): User
+    player(id: String): User
+    players: [User]!
     team(id: String): Team
     teams: [Team]!
   }
