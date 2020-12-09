@@ -67,4 +67,11 @@ export const Mutation = {
       throw new Error("No invitation with that id");
     }
   },
+  createGameChallenge: async (parent, { data }, context, info) => {
+    const { challengerId, defenderId } = data;
+    const sql =
+      "INSERT INTO game_challenges(challenging_team, defending_team) VALUES(?,?);";
+    const result = await db.run(sql, [challengerId, defenderId]);
+    return { id: result.lastID, challengerId, defenderId };
+  },
 };
