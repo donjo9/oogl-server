@@ -74,4 +74,29 @@ export const Mutation = {
     const result = await db.run(sql, [challengerId, defenderId]);
     return { id: result.lastID, challengerId, defenderId };
   },
+  acceptGameChallenge: async (parent, { data }, context, info) => {
+    const { challengeId } = data;
+    const qSql =
+      "SELECT challenging_team, defending_team FROM game_challenges WHERE id=(?)";
+    const iSql =
+      "INSERT INTO games(challenging_team, defending_team) VALUES(?,?)";
+    const gSql = "SELECT * FROM games WHERE id=(?)";
+    const dSql = "DELETE FROM game_challenges WHERE id=(?)";
+    const challenge = await db.get(qSql, [challengeId]);
+    if (!challenge) {
+      throw new Error("Challenge not found, please check and try again");
+    }
+    console.dir(challenge);
+    const res = await db.run(iSql, [
+      challenge.challenging_team,
+      challenge.defending_team,
+    ]);
+
+    const game = await db.get(gSql, [res.lastID]);
+    if (!game) {
+      throw new Error("Something went wrong, please try again");
+    }
+    await db.run(dSql, [challengeId]);
+    return game;
+  },
 };

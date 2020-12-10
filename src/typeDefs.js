@@ -34,6 +34,15 @@ export const typeDefs = gql`
     defenderId: String
   }
 
+  type Game {
+    id: ID!
+    challenging_team: String
+    defending_team: String
+    challenging_score: Int
+    defending_score: Int
+    game_staus: String
+  }
+
   input CreateTeamPayload {
     userid: String
     name: String
@@ -52,11 +61,17 @@ export const typeDefs = gql`
     defenderId: String
   }
 
+  input AcceptGameChallengePayload {
+    challengeId: String
+  }
+
   type Query {
     player(id: String): User
     players: [User]!
     team(id: String): Team
     teams: [Team]!
+    game(id: String): Game
+    games: [Game]!
   }
 
   type Mutation {
@@ -66,5 +81,6 @@ export const typeDefs = gql`
     createTeamInvitation(data: CreateTeamInvitationPayload): Boolean!
     acceptTeamInvitation(data: AcceptTeamInvitationPayload): Team!
     createGameChallenge(data: CreateChallengePayload): Challenge!
+    acceptGameChallenge(data: AcceptGameChallengePayload): Game!
   }
 `;

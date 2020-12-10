@@ -38,4 +38,13 @@ export const Query = {
     const team = await db.get(sql, [id]);
     return team;
   },
+  game: async (parent, { id }, context, info) => {
+    const sql = "SELECT * FROM games WHERE id=(?)";
+    const game = await db.get(sql, [id]);
+    return game;
+  },
+  games: () => {
+    const sql = "SELECT * FROM games";
+    return db.all(sql);
+  },
 };
