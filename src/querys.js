@@ -21,14 +21,15 @@ export const Query = {
   player: async (parent, { id }, context, info) => {
     const sql = "SELECT id, username from users WHERE id=(?);";
     const user = await db.get(sql, id);
+
     return user;
   },
-  players: async (parent, data, context, info) => {
+  players: async (parent, args, context, info) => {
     const sql = "SELECT id, username FROM users";
     const users = await db.all(sql);
     return users || [];
   },
-  teams: async (parent, data, context) => {
+  teams: async (parent, args, context) => {
     const sql = "SELECT id, name, tag FROM teams;";
     const t = await db.all(sql);
     return t;
