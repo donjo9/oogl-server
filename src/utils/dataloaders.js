@@ -1,7 +1,7 @@
 import Dataloader from "dataloader";
 import { db } from "./db.js";
 
-const getBatchPlayers = async (teamIds) => {
+const getBatchTeamPlayers = async (teamIds) => {
   const placeholder = teamIds.map(() => "?").join(",");
   const sql = `SELECT usr.id as uid, usr.username as username, usr.email as email, team.id as tid FROM users usr
     JOIN player_team_realation ptr
@@ -35,5 +35,6 @@ const getBatchPlayers = async (teamIds) => {
 };
 
 export const teamPlayerLoader = new Dataloader((teamIds) =>
-  getBatchPlayers(teamIds)
+  getBatchTeamPlayers(teamIds)
+);
 );
