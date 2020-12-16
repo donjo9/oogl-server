@@ -1,9 +1,28 @@
 import { db } from "./utils/db.js";
-import { teamPlayerLoader } from "./utils/dataloaders.js";
+import {
+  teamPlayerLoader,
+  teamGamesLoader,
+  gameTeamsLoader,
+} from "./utils/dataloaders.js";
 
 const players = async (parent, data, context) => {
   const players = await teamPlayerLoader.load(parent.id);
   return players;
+};
+
+const games = async (parent, args, context) => {
+  const games = await teamGamesLoader.load(parent.id);
+  return games;
+};
+
+const challenging_team = async (parent, args, context) => {
+  const challenging_teams = await gameTeamsLoader.load(parent.challenging_team);
+  return challenging_teams;
+};
+
+const defending_team = async (parent, args, context) => {
+  const defending_teams = await gameTeamsLoader.load(parent.challenging_team);
+  return defending_teams;
 };
 
 export const User = {
@@ -16,6 +35,12 @@ export const User = {
 };
 export const Team = {
   players,
+  games,
+};
+
+export const Game = {
+  challenging_team,
+  defending_team,
 };
 export const Query = {
   player: async (parent, { id }, context, info) => {

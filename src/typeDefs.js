@@ -11,6 +11,7 @@ export const typeDefs = gql`
     name: String!
     tag: String!
     players: [User]
+    games: [Game]!
   }
 
   type AuthRespons {
@@ -36,8 +37,8 @@ export const typeDefs = gql`
 
   type Game {
     id: ID!
-    challenging_team: String
-    defending_team: String
+    challenging_team: Team
+    defending_team: Team
     challenging_score: Int
     defending_score: Int
     game_staus: String
