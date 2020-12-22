@@ -68,31 +68,56 @@ export const Mutation = {
     }
   },
   createGameChallenge: async (parent, { data }, context, info) => {
-    const { challengerId, defenderId } = data;
-    const sql =
-      "INSERT INTO game_challenges(challenging_team, defending_team) VALUES(?,?);";
-    const result = await db.run(sql, [challengerId, defenderId]);
-    return { id: result.lastID, challengerId, defenderId };
+    const { team1, team2 } = data;
+    const gcSql = "INSERT INTO game_challenges(id) VALUES(?);";
+    const result = await db.run(gcSql, [null]);
+    const gcrSql =
+      "INSERT INTO game_challenge_relation(team,game_challenge) VALUES(?, ?),(?, ?);";
+
+    const res = await db.run(gcrSql, [
+      team1,
+      result.lastID,
+      team2,
+      result.lastID,
+    ]);
+    return { id: result.lastID, team1, team2 };
   },
   acceptGameChallenge: async (parent, { data }, context, info) => {
     const { challengeId } = data;
-    const qSql =
-      "SELECT challenging_team, defending_team FROM game_challenges WHERE id=(?)";
-    const iSql =
-      "INSERT INTO games(challenging_team, defending_team) VALUES(?,?)";
-    const gSql = "SELECT * FROM games WHERE id=(?)";
-    const dSql = "DELETE FROM game_challenges WHERE id=(?)";
-    const challenge = await db.get(qSql, [challengeId]);
+    const challengeSql = `SELECT gcr.team FROM game_challenges gc
+      JOIN game_challenge_relation gcr
+          ON gcr.game_challenge = gc.id
+      WHERE gc.id = ?
+      ORDER BY gcr.id ASC`;
+    const challenge = await db.all(challengeSql, [challengeId]);
     if (!challenge) {
       throw new Error("Challenge not found, please check and try again");
     }
-    console.dir(challenge);
-    const res = await db.run(iSql, [
-      challenge.challenging_team,
-      challenge.defending_team,
-    ]);
 
-    const game = await db.get(gSql, [res.lastID]);
+    if (challenge.length < 2) {
+      throw new Error("Something went wrong, please try again");
+    }
+
+    console.dir(challenge);
+    const gameSql = "INSERT INTO games(id) VALUES(?)";
+    const gameresult = await db.run(gameSql, [null]);
+
+    if (!gameresult) {
+      throw new Error("Something went wrong, please try again");
+    }
+
+    const iSql =
+      "INSERT INTO game_team_relation(team,game) VALUES(?, ?),(?, ?);";
+    const res = await db.run(iSql, [
+      challenge[0].team,
+      gameresult.lastID,
+      challenge[1].team,
+      gameresult.lastID,
+    ]);
+    const gSql = "SELECT * FROM games WHERE id=(?)";
+    const dSql = "DELETE FROM game_challenges WHERE id=(?)";
+
+    const game = await db.get(gSql, [gameresult.lastID]);
     if (!game) {
       throw new Error("Something went wrong, please try again");
     }

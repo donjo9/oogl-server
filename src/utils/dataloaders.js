@@ -36,66 +36,45 @@ const getBatchTeamPlayers = async (teamIds) => {
 
 const getBatchTeamGames = async (teamIds) => {
   const placeholder = teamIds.map(() => "?").join(",");
-  const sql = `SELECT * FROM games WHERE challenging_team IN (${placeholder}) OR defending_team IN (${placeholder})`;
-  const rows = await db.all(sql, [...teamIds, ...teamIds]);
+  const sql = `SELECT g.id, g.game_status, gtr.team FROM games g JOIN game_team_relation gtr ON gtr.team IN (${placeholder})`;
+  const rows = await db.all(sql, teamIds);
   if (rows) {
     let mappedInput = {};
     rows.forEach((r) => {
-      if (mappedInput[r.challenging_team]) {
-        mappedInput[r.challenging_team].push({
-          id: r.id,
-          challenging_team: r.challenging_team,
-          defending_team: r.defending_team,
-          challenging_score: r.challenging_score,
-          defending_score: r.defending_score,
-          game_status: r.game_staus,
-        });
+      if (!mappedInput[r.team]) {
+        mappedInput[r.team] = [];
+        mappedInput[r.team].push({ id: r.id, game_status: r.game_status });
       } else {
-        mappedInput[r.challenging_team] = [];
-        mappedInput[r.challenging_team].push({
-          id: r.id,
-          challenging_team: r.challenging_team,
-          defending_team: r.defending_team,
-          challenging_score: r.challenging_score,
-          defending_score: r.defending_score,
-          game_status: r.game_staus,
-        });
-      }
-
-      if (mappedInput[r.defending_team]) {
-        mappedInput[r.defending_team].push({
-          id: r.id,
-          challenging_team: r.challenging_team,
-          defending_team: r.defending_team,
-          challenging_score: r.challenging_score,
-          defending_score: r.defending_score,
-          game_status: r.game_staus,
-        });
-      } else {
-        mappedInput[r.defending_team] = [];
-        mappedInput[r.defending_team].push({
-          id: r.id,
-          challenging_team: r.challenging_team,
-          defending_team: r.defending_team,
-          challenging_score: r.challenging_score,
-          defending_score: r.defending_score,
-          game_status: r.game_staus,
-        });
+        mappedInput[r.team].push({ id: r.id, game_status: r.game_status });
       }
     });
-    const games = teamIds.map((teamIds) => {
-      if (mappedInput[teamIds]) {
-        return mappedInput[teamIds];
-      }
-      return [];
-    });
+    const games = teamIds.map((teamId) => mappedInput[teamId]);
     return games;
   }
   return [];
 };
 
-const getBatchGameTeams = async (teamIds) => {
-  console.log(teamIds);
+const getBatchGameTeams = async (gameIds) => {
+  const placeholder = gameIds.map(() => "?").join(",");
+  const sql = `SELECT * FROM game_team_relation WHERE game in (${placeholder})`;
+  const rows = await db.all(sql, gameIds);
+  if (rows) {
+    const mappedInput = {};
+    rows.map((r) => {
+      if (!mappedInput[r.game]) {
+        mappedInput[r.game] = [];
+        mappedInput[r.game].push(r);
+      } else {
+        mappedInput[r.game].push(r);
+      }
+    });
+    const teams = gameIds.map((id) => mappedInput[id]);
+    return teams;
+  }
+  return [];
+};
+
+const getBatchGameTeamsInfo = async (teamIds) => {
   const placeholder = teamIds.map(() => "?").join(",");
   const sql = `SELECT * FROM teams WHERE id in (${placeholder})`;
   const rows = await db.all(sql, teamIds);
@@ -103,11 +82,7 @@ const getBatchGameTeams = async (teamIds) => {
     const mappedInput = {};
     rows.map((r) => {
       if (!mappedInput[r.id]) {
-        mappedInput[r.id] = {
-          id: r.id,
-          name: r.name,
-          tag: r.tag,
-        };
+        mappedInput[r.id] = r;
       }
     });
     const teams = teamIds.map((id) => mappedInput[id]);
@@ -124,6 +99,10 @@ export const teamGamesLoader = new Dataloader((teamIds) =>
   getBatchTeamGames(teamIds)
 );
 
-export const gameTeamsLoader = new Dataloader((teamIds) =>
-  getBatchGameTeams(teamIds)
+export const gameTeamsLoader = new Dataloader((gameIds) =>
+  getBatchGameTeams(gameIds)
+);
+
+export const gameTeamsInfoLoader = new Dataloader((teamIds) =>
+  getBatchGameTeamsInfo(teamIds)
 );

@@ -3,6 +3,7 @@ import {
   teamPlayerLoader,
   teamGamesLoader,
   gameTeamsLoader,
+  gameTeamsInfoLoader,
 } from "./utils/dataloaders.js";
 
 const players = async (parent, data, context) => {
@@ -15,14 +16,14 @@ const games = async (parent, args, context) => {
   return games;
 };
 
-const challenging_team = async (parent, args, context) => {
-  const challenging_teams = await gameTeamsLoader.load(parent.challenging_team);
-  return challenging_teams;
+const teams = async (parent, args, context) => {
+  const teams = await gameTeamsLoader.load(parent.id);
+  return teams;
 };
 
-const defending_team = async (parent, args, context) => {
-  const defending_teams = await gameTeamsLoader.load(parent.challenging_team);
-  return defending_teams;
+const teamInfo = async (parent, args, context) => {
+  const team = await gameTeamsInfoLoader.load(parent.team);
+  return team;
 };
 
 export const User = {
@@ -39,8 +40,11 @@ export const Team = {
 };
 
 export const Game = {
-  challenging_team,
-  defending_team,
+  teams,
+};
+
+export const GameTeam = {
+  teamInfo,
 };
 export const Query = {
   player: async (parent, { id }, context, info) => {
@@ -69,8 +73,8 @@ export const Query = {
     const game = await db.get(sql, [id]);
     return game;
   },
-  games: () => {
-    const sql = "SELECT * FROM games";
-    return db.all(sql);
+  games: async () => {
+    const sql = `SELECT * FROM games`;
+    return await db.all(sql);
   },
 };

@@ -31,17 +31,20 @@ export const typeDefs = gql`
 
   type Challenge {
     id: ID!
-    challengerId: String
-    defenderId: String
+    team1: String
+    team2: String
+  }
+
+  type GameTeam {
+    id: ID!
+    score: Int
+    teamInfo: Team
   }
 
   type Game {
     id: ID!
-    challenging_team: Team
-    defending_team: Team
-    challenging_score: Int
-    defending_score: Int
-    game_staus: String
+    teams: [GameTeam]!
+    game_status: String
   }
 
   input CreateTeamPayload {
@@ -58,8 +61,8 @@ export const typeDefs = gql`
   }
 
   input CreateChallengePayload {
-    challengerId: String
-    defenderId: String
+    team1: String
+    team2: String
   }
 
   input AcceptGameChallengePayload {
