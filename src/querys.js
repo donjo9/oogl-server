@@ -4,6 +4,8 @@ import {
   teamGamesLoader,
   gameTeamsLoader,
   gameTeamsInfoLoader,
+  challengeTeamsLoader,
+  teamChallengeLoader,
 } from "./utils/dataloaders.js";
 
 const players = async (parent, data, context) => {
@@ -16,7 +18,7 @@ const games = async (parent, args, context) => {
   return games;
 };
 
-const teams = async (parent, args, context) => {
+const gameteams = async (parent, args, context) => {
   const teams = await gameTeamsLoader.load(parent.id);
   return teams;
 };
@@ -24,6 +26,16 @@ const teams = async (parent, args, context) => {
 const teamInfo = async (parent, args, context) => {
   const team = await gameTeamsInfoLoader.load(parent.team);
   return team;
+};
+
+const challengeteams = async (parent, args, context) => {
+  const teams = await challengeTeamsLoader.load(parent.id);
+  return teams;
+};
+
+const challenges = async (parent, args, context) => {
+  const challenges = await teamChallengeLoader.load(parent.id);
+  return challenges;
 };
 
 export const User = {
@@ -37,10 +49,15 @@ export const User = {
 export const Team = {
   players,
   games,
+  challenges,
+};
+
+export const Challenge = {
+  teams: challengeteams,
 };
 
 export const Game = {
-  teams,
+  teams: gameteams,
 };
 
 export const GameTeam = {
@@ -76,5 +93,11 @@ export const Query = {
   games: async () => {
     const sql = `SELECT * FROM games`;
     return await db.all(sql);
+  },
+  challenges: async () => {
+    const sql = `SELECT * FROM game_challenges`;
+    const challenges = await db.all(sql);
+    console.log(challenges);
+    return challenges;
   },
 };

@@ -12,6 +12,7 @@ export const typeDefs = gql`
     tag: String!
     players: [User]
     games: [Game]!
+    challenges: [Challenge]!
   }
 
   type AuthRespons {
@@ -31,20 +32,18 @@ export const typeDefs = gql`
 
   type Challenge {
     id: ID!
-    team1: String
-    team2: String
-  }
-
-  type GameTeam {
-    id: ID!
-    score: Int
-    teamInfo: Team
+    teams: [Team]!
   }
 
   type Game {
     id: ID!
     teams: [GameTeam]!
     game_status: String
+  }
+  type GameTeam {
+    id: ID!
+    score: Int
+    teamInfo: Team
   }
 
   input CreateTeamPayload {
@@ -74,6 +73,7 @@ export const typeDefs = gql`
     players: [User]!
     team(id: String): Team
     teams: [Team]!
+    challenges: [Challenge]!
     game(id: String): Game
     games: [Game]!
   }

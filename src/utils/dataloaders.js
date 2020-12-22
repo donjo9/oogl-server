@@ -91,6 +91,60 @@ const getBatchGameTeamsInfo = async (teamIds) => {
   return [];
 };
 
+const getBatchChallengeTeams = async (challengeIds) => {
+  console.log(challengeIds);
+  const placeholder = challengeIds.map(() => "?").join(",");
+  const sql = `SELECT t.id as id, t.name, t.tag, gcr.id as gid FROM teams t JOIN game_challenge_relation gcr ON gcr.id IN (${placeholder})`;
+  const rows = await db.all(sql, challengeIds);
+  const mappedInput = {};
+  if (rows) {
+    rows.map((r) => {
+      if (!mappedInput[r.gid]) {
+        mappedInput[r.gid] = [];
+        mappedInput[r.gid].push({
+          id: r.id,
+          name: r.name,
+          tag: r.tag,
+        });
+      } else {
+        mappedInput[r.gid].push({
+          id: r.id,
+          name: r.name,
+          tag: r.tag,
+        });
+      }
+    });
+    const teams = challengeIds.map((id) => mappedInput[id]);
+    return teams;
+  }
+  return [];
+};
+
+const getBatchTeamChallenges = async (teamIds) => {
+  console.log(teamIds);
+  const placeholder = teamIds.map(() => "?").join(",");
+  const sql = `SELECT * FROM game_challenge_relation gcr WHERE team IN (${placeholder})`;
+  const rows = await db.all(sql, teamIds);
+  const mappedInput = {};
+  if (rows) {
+    rows.map((r) => {
+      if (!mappedInput[r.team]) {
+        mappedInput[r.team] = [];
+        mappedInput[r.team].push({
+          id: r.game_challenge,
+        });
+      } else {
+        mappedInput[r.team].push({
+          id: r.game_challenge,
+        });
+      }
+    });
+    const teams = teamIds.map((id) => mappedInput[id]);
+    return teams;
+  }
+  return [];
+};
+
 export const teamPlayerLoader = new Dataloader((teamIds) =>
   getBatchTeamPlayers(teamIds)
 );
@@ -105,4 +159,12 @@ export const gameTeamsLoader = new Dataloader((gameIds) =>
 
 export const gameTeamsInfoLoader = new Dataloader((teamIds) =>
   getBatchGameTeamsInfo(teamIds)
+);
+
+export const challengeTeamsLoader = new Dataloader((challengeIds) =>
+  getBatchChallengeTeams(challengeIds)
+);
+
+export const teamChallengeLoader = new Dataloader((teamId) =>
+  getBatchTeamChallenges(teamId)
 );

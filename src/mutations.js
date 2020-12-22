@@ -80,7 +80,7 @@ export const Mutation = {
       team2,
       result.lastID,
     ]);
-    return { id: result.lastID, team1, team2 };
+    return { id: result.lastID };
   },
   acceptGameChallenge: async (parent, { data }, context, info) => {
     const { challengeId } = data;
