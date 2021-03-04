@@ -16,7 +16,7 @@ export const typeDefs = gql`
   }
 
   type AuthRespons {
-    id: String
+    user: User
     token: String
   }
 

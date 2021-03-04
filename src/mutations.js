@@ -5,7 +5,7 @@ import bcrypt from "bcryptjs";
 export const Mutation = {
   signin: async (parent, { data }, context) => {
     const { username, password } = data;
-    const sql = "SELECT id, password FROM users WHERE username = (?);";
+    const sql = "SELECT id,username, password FROM users WHERE username = (?);";
     const user = await db.get(sql, [username]);
     if (!user) {
       throw new Error("Wrong username and/or password");
@@ -16,7 +16,8 @@ export const Mutation = {
       throw new Error("Wrong username and/or password");
     }
 
-    return { id: user.id, token: nanoid() };
+    console.log(user);
+    return { user, token: nanoid() };
   },
   signup: async (parent, { data }, context, info) => {
     const { username, password, email } = data;
@@ -26,7 +27,7 @@ export const Mutation = {
       "INSERT INTO users (id, username, password, email) VALUES(?,?,?,?)",
       [id, username, hash, email]
     );
-    return { id, token: nanoid() };
+    return { user: { username, id }, token: nanoid() };
   },
   createTeam: async (parent, { data }, context) => {
     const { userid, name, tag } = data;
